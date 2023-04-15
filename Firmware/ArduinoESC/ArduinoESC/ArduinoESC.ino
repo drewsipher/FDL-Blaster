@@ -2,20 +2,44 @@
         Arduino Brushless Motor Control
      by Dejan, https://howtomechatronics.com
 */
+// #if defined(MILLIS_USE_TIMERA0) || defined(__AVR_ATtinyxy2__)
+//   #error "This sketch takes over TCA0, don't use for millis here.  Pin mappings on 8-pin parts are different"
+// #endif
+// #include <Servo.h>
 
-#include <Servo.h>
+// Servo ESC;     // create servo object to control the ESC
+#define ESC_Speed_Pin 1
+#define POT_Speed_Pin 3
+#define Toggle_Pin 4
 
-Servo ESC;     // create servo object to control the ESC
-
+// #define MinPW 750
+// #define MaxPW 2250
+#define MIN_ANALOG 128
 int potValue;  // value from the analog pin
+uint8_t analog = MIN_ANALOG;
 
 void setup() {
-  // Attach the ESC on pin 9
-  ESC.attach(3,1000,2000); // (pin, min pulse width, max pulse width in microseconds) 
+  pinMode(Toggle_Pin, INPUT_PULLUP);
+  pinMode(ESC_Speed_Pin, OUTPUT); //PA1 - 
+  delay(1000);
+  analogWrite(ESC_Speed_Pin, analog);
+
 }
 
 void loop() {
-  potValue = analogRead(A0);   // reads the value of the potentiometer (value between 0 and 1023)
-  potValue = map(potValue, 0, 1023, 0, 180);   // scale it to use it with the servo library (value between 0 and 180)
-  ESC.write(potValue);    // Send the signal to the ESC
+  if (digitalRead(Toggle_Pin) == LOW)
+  {
+    potValue = analogRead(POT_Speed_Pin);   // reads the value of the potentiometer (value between 0 and 1023)
+    uint8_t value = (potValue / 8) + MIN_ANALOG;
+    if(analog < value)
+    { 
+      analog ++;
+      delay(10);
+    } else {
+      analog = value;
+    }
+  } else {
+    analog = MIN_ANALOG;
+  }
+  analogWrite(ESC_Speed_Pin, analog);
 }
